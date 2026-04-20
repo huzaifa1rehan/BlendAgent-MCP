@@ -1,32 +1,159 @@
-# BlendAgent-MCP
-🛠 Project Overview
-BlendAgent-MCP is a cutting-edge implementation of the Model Context Protocol (MCP), designed to turn Large Language Models (like Claude 3.5 Sonnet and GPT Models) into expert 3D artists. By exposing Blender’s powerful BPY (Blender Python API) to AI agents, this project enables a seamless "Text-to-3D-Action" workflow.
+# 🚀 BlendAgent-MCP
 
-Instead of navigating complex menus, users can simply describe their scene, and the AI agent executes the necessary Python scripts in real-time within Blender.
+### Turn Natural Language into Professional 3D Scenes in Blender
 
-✨ Key Features
-Natural Language Modeling: Create primitives, modify meshes, and arrange scenes using simple English commands.
+---
 
-Smart Rendering Pipeline: Automate camera setups, focal length adjustments, and render engine configurations (Cycles/Eevee).
+## 🧠 Overview
 
-Procedural Lighting: Dynamic placement of Point, Sun, and Area lights based on the desired mood of the scene.
+**BlendAgent-MCP** is an AI-powered system that bridges **Large Language Models (LLMs)** with **Blender** using the **Model Context Protocol (MCP)**.
 
-Material Automation: Assign and tweak shaders and textures via AI without touching the Shader Editor.
+It transforms simple text instructions into **real-time 3D actions**, allowing users to create, edit, and render scenes without manually interacting with Blender’s complex interface.
 
-Context-Aware Execution: The MCP server ensures the AI understands the current state of the Blender scene before suggesting changes.
+Instead of clicking through menus or writing scripts, you can simply say:
 
-🚀 Why This Matters (The "Wow" Factor)
-In a traditional 3D pipeline, repetitive tasks like setting up environment lighting or cleaning up a scene can take hours. BlendAgent-MCP reduces this to seconds.
+> *"Create a modern room with soft lighting and a cinematic camera angle"*
 
-For Artists: Focus on creativity while the AI handles the "grunt work."
+…and the system executes it inside Blender instantly.
 
-For Developers: Build 3D environments programmatically without deep knowledge of the BPY API.
+---
 
-Technopreneurship Goal: This project is a prototype for a B2B SaaS tool aimed at game studios and architectural visualization firms to optimize their production speed.
+## ✨ Core Features
 
-🏗 Technical Stack
-Protocol: Model Context Protocol (MCP)
+### 🗣 Natural Language → 3D Execution
 
-Language: Python
+* Generate objects, modify meshes, and build scenes using plain English
+* No need to manually code with Blender Python (BPY)
 
-API: Blender Python API (BPY)
+### 🎥 Intelligent Rendering Pipeline
+
+* Automatic camera positioning and composition
+* Supports **Cycles** and **Eevee** rendering engines
+* Adjusts focal length and cinematic framing dynamically
+
+### 💡 Procedural Lighting System
+
+* AI-controlled lighting setup based on scene mood
+* Supports:
+
+  * Point Lights
+  * Sun Lights
+  * Area Lights
+
+### 🎨 Material & Shader Automation
+
+* Apply and modify materials without using Shader Editor
+* AI handles:
+
+  * Colors
+  * Textures
+  * Surface properties
+
+### 🧠 Context-Aware Scene Understanding
+
+* MCP server tracks current Blender scene state
+* AI suggests intelligent updates instead of random changes
+
+---
+
+## 🔥 Why This Project Stands Out
+
+Traditional 3D workflows are:
+
+❌ Time-consuming
+❌ Technically complex
+❌ Repetitive
+
+**BlendAgent-MCP solves this by:**
+
+✔ Reducing hours of work into seconds
+✔ Eliminating the need for deep Blender expertise
+✔ Automating repetitive production tasks
+
+---
+
+## 👨‍🎨 For Artists
+
+* Focus purely on **creativity**
+* Skip technical setup
+* Build scenes faster than ever
+
+---
+
+## 👨‍💻 For Developers
+
+* Programmatically control Blender using AI
+* No need to deeply learn BPY
+* Easily integrate into pipelines
+
+---
+
+## 💼 Business Vision (SaaS Potential)
+
+This project is designed as a **prototype for a B2B SaaS platform** targeting:
+
+* 🎮 Game Development Studios
+* 🏗 Architectural Visualization Firms
+* 🎬 Animation & Content Studios
+
+### Value Proposition:
+
+* Faster production cycles
+* Reduced manual effort
+* Scalable 3D content generation
+
+---
+
+## 🏗 Technical Architecture
+
+| Component      | Technology                   |
+| -------------- | ---------------------------- |
+| Protocol       | Model Context Protocol (MCP) |
+| Language       | Python                       |
+| 3D Engine      | Blender                      |
+| API Layer      | Blender Python API (BPY)     |
+| AI Integration | GPT API                      |
+| Communication  | Custom Blender Add-on        |
+
+---
+
+## 🔌 How It Works
+
+1. User gives a natural language prompt
+2. GPT API processes the instruction
+3. MCP server structures the task
+4. Python (BPY) scripts are generated
+5. Blender Add-on executes actions in real-time
+
+---
+
+## ⚡ Example Commands
+
+* *"Create a realistic glass sphere with reflections"*
+* *"Add sunset lighting with warm tones"*
+* *"Position camera for cinematic close-up"*
+
+---
+
+## 🚀 Future Improvements
+
+* Scene memory & version control
+* Voice-based interaction
+* Asset library integration
+* Multi-agent collaboration system
+
+---
+
+## 📌 Author
+
+**Huzaifa Rehan**
+AI Developer | Python | 3D Automation | RAG Systems
+
+---
+
+## ⭐ Final Note
+
+BlendAgent-MCP is not just a tool —
+it’s a step toward **AI-driven creative workflows**, where ideas instantly become reality.
+
+---
