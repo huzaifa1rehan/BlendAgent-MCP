@@ -1,0 +1,14 @@
+# API Key - KABHI UPLOAD MAT KARNA
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
