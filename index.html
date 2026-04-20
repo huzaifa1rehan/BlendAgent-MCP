@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blender MCP Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --bg2: #0f0f1a; --panel: #16162a;
+    --border: #2a2a4a; --orange: #e8721c; --green: #00ff88;
+    --red: #ff4444; --blue: #4a9eff; --text: #e0e0f0; --text2: #8888aa;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'JetBrains Mono',monospace; min-height:100vh; }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image: linear-gradient(rgba(232,114,28,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(232,114,28,0.03) 1px,transparent 1px);
+    background-size:40px 40px; pointer-events:none; z-index:0;
+  }
+  .wrap { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:20px; }
+
+  header {
+    display:flex; align-items:center; gap:16px;
+    padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:24px;
+  }
+  .logo-svg { width:48px; height:48px; filter:drop-shadow(0 0 8px rgba(232,114,28,0.6)); }
+  h1 { font-family:'Orbitron',sans-serif; font-size:20px; color:var(--orange); letter-spacing:3px; text-shadow:0 0 20px rgba(232,114,28,0.4); }
+  .subtitle { font-size:10px; color:var(--text2); letter-spacing:3px; margin-top:3px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); margin-left:auto; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .grid { display:grid; grid-template-columns:1fr 360px; gap:16px; }
+  .left { display:flex; flex-direction:column; gap:14px; }
+  .right { display:flex; flex-direction:column; gap:14px; }
+
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .card-header {
+    padding:10px 16px; background:#13131f; border-bottom:1px solid var(--border);
+    font-size:9px; letter-spacing:3px; color:var(--text2); text-transform:uppercase;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card-header::before { content:''; width:5px; height:5px; background:var(--orange); border-radius:50%; }
+
+  /* Pipeline */
+  .pipeline { display:flex; padding:18px; gap:0; }
+  .step { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; }
+  .step:not(:last-child)::after {
+    content:''; position:absolute; top:17px; right:-50%; width:100%; height:2px;
+    background:var(--border); z-index:0; transition:background 0.4s;
+  }
+  .step.done:not(:last-child)::after { background:var(--orange); box-shadow:0 0 6px var(--orange); }
+  .step-icon {
+    width:36px; height:36px; border-radius:50%; border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    background:var(--bg2); z-index:1; transition:all 0.3s;
+  }
+  .step.active .step-icon { border-color:var(--orange); box-shadow:0 0 15px rgba(232,114,28,0.5); animation:glow 1s infinite; }
+  .step.done .step-icon { border-color:var(--green); background:rgba(0,255,136,0.1); }
+  .step.error .step-icon { border-color:var(--red); }
+  @keyframes glow { 0%,100%{box-shadow:0 0 8px rgba(232,114,28,0.4)} 50%{box-shadow:0 0 20px rgba(232,114,28,0.8)} }
+  .step-label { font-size:8px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; }
+  .step.active .step-label { color:var(--orange); }
+  .step.done .step-label { color:var(--green); }
+
+  /* Input */
+  .input-area { padding:14px; display:flex; flex-direction:column; gap:10px; }
+  textarea {
+    background:var(--bg2); border:1px solid var(--border); border-radius:6px;
+    color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12px;
+    padding:12px; resize:none; height:90px; width:100%; outline:none; transition:border-color 0.3s;
+  }
+  textarea:focus { border-color:var(--orange); box-shadow:0 0 10px rgba(232,114,28,0.15); }
+  textarea::placeholder { color:var(--text2); }
+
+  .btn-row { display:flex; gap:8px; }
+  .btn-run {
+    flex:1; background:var(--orange); border:none; color:#000;
+    font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700;
+    letter-spacing:2px; padding:11px; border-radius:6px; cursor:pointer; transition:all 0.3s;
+  }
+  .btn-run:hover { background:#ff8c00; box-shadow:0 0 20px rgba(232,114,28,0.4); }
+  .btn-run:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-clear {
+    background:var(--bg2); border:1px solid var(--border); color:var(--text2);
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    padding:11px 16px; border-radius:6px; cursor:pointer; transition:all 0.3s;
+  }
+  .btn-clear:hover { border-color:var(--red); color:var(--red); }
+
+  .optimized-box {
+    background:var(--bg2); border:1px solid rgba(232,114,28,0.3);
+    border-radius:6px; padding:10px 12px; font-size:11px; color:var(--text);
+    line-height:1.6; display:none;
+  }
+  .optimized-label { font-size:8px; color:var(--orange); letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; }
+
+  /* Log */
+  .log-box { padding:12px; height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+  .log-box::-webkit-scrollbar { width:3px; }
+  .log-box::-webkit-scrollbar-thumb { background:var(--border); }
+  .log-entry { display:flex; gap:8px; font-size:10px; animation:fadeIn 0.3s; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .lt { color:var(--text2); min-width:55px; }
+  .ltag { min-width:75px; font-weight:700; }
+  .ltag.info { color:var(--blue); }
+  .ltag.success { color:var(--green); }
+  .ltag.error { color:var(--red); }
+  .ltag.agent { color:var(--orange); }
+  .lmsg { color:var(--text); flex:1; }
+
+  /* Code */
+  .code-box { background:var(--bg); padding:12px; height:150px; overflow-y:auto; font-size:10px; line-height:1.7; color:#a0a0cc; }
+  .code-box::-webkit-scrollbar { width:3px; }
+  .code-box::-webkit-scrollbar-thumb { background:var(--border); }
+  .kw { color:#ff79c6; } .fn { color:#50fa7b; } .st { color:#f1fa8c; } .cm { color:#6272a4; } .nm { color:#bd93f9; }
+
+  /* Stats */
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px; }
+  .stat { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:12px; text-align:center; }
+  .stat-val { font-family:'Orbitron',sans-serif; font-size:22px; font-weight:700; color:var(--orange); }
+  .stat-lbl { font-size:8px; color:var(--text2); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+
+  /* History */
+  .hist-box { padding:10px; height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+  .hist-box::-webkit-scrollbar { width:3px; }
+  .hist-box::-webkit-scrollbar-thumb { background:var(--border); }
+  .hist-item {
+    background:var(--bg2); border:1px solid var(--border); border-radius:6px;
+    padding:9px 11px; cursor:pointer; transition:all 0.2s; animation:fadeIn 0.3s;
+  }
+  .hist-item:hover { border-color:var(--orange); background:rgba(232,114,28,0.05); }
+  .hist-text { font-size:10px; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .hist-meta { display:flex; justify-content:space-between; margin-top:5px; }
+  .hist-time { font-size:8px; color:var(--text2); }
+  .hist-status { font-size:8px; padding:2px 5px; border-radius:3px; }
+  .hist-status.success { background:rgba(0,255,136,0.1); color:var(--green); }
+  .hist-status.error { background:rgba(255,68,68,0.1); color:var(--red); }
+
+  .empty { color:var(--text2); font-size:10px; text-align:center; padding:20px; opacity:0.5; }
+
+  /* Blender status */
+  .bl-status { display:flex; align-items:center; gap:12px; padding:12px 14px; }
+  .bl-info .title { font-size:11px; }
+  .bl-info .sub { font-size:9px; color:var(--text2); margin-top:2px; }
+  .live { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--green); margin-left:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="logo-svg" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="#1a1a2e" stroke="#e8721c" stroke-width="2"/>
+      <circle cx="50" cy="42" r="18" fill="none" stroke="#e8721c" stroke-width="5"/>
+      <circle cx="50" cy="42" r="8" fill="#e8721c"/>
+      <rect x="20" y="38" width="60" height="8" rx="4" fill="#ff8c00"/>
+      <path d="M35 60 L65 60 L75 80 L25 80 Z" fill="#e8721c" opacity="0.8"/>
+      <circle cx="50" cy="42" r="3" fill="#fff"/>
+    </svg>
+    <div>
+      <h1>BLENDER MCP AGENT</h1>
+      <div class="subtitle">GPT-4o · MCP · PORT 9876</div>
+    </div>
+    <div class="dot"></div>
+  </header>
+
+  <div class="grid">
+    <div class="left">
+
+      <!-- Pipeline -->
+      <div class="card">
+        <div class="card-header">Agent Pipeline</div>
+        <div class="pipeline">
+          <div class="step" id="s1"><div class="step-icon">📝</div><div class="step-label">Input</div></div>
+          <div class="step" id="s2"><div class="step-icon">🔍</div><div class="step-label">Debug</div></div>
+          <div class="step" id="s3"><div class="step-icon">✨</div><div class="step-label">Optimize</div></div>
+          <div class="step" id="s4"><div class="step-icon">🤖</div><div class="step-label">GPT Code</div></div>
+          <div class="step" id="s5"><div class="step-icon">🎮</div><div class="step-label">Blender</div></div>
+          <div class="step" id="s6"><div class="step-icon">✅</div><div class="step-label">Done</div></div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="card">
+        <div class="card-header">Prompt Input</div>
+        <div class="input-area">
+          <textarea id="promptInput" placeholder="Kya banana chahte ho? e.g. Create a shiny red apple..."></textarea>
+          <div class="optimized-box" id="optBox">
+            <div class="optimized-label">✨ Optimized Prompt</div>
+            <div id="optText"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-run" id="runBtn" onclick="runAgent()">🚀 RUN AGENT</button>
+            <button class="btn-clear" onclick="clearAll()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="card">
+        <div class="card-header">Agent Log</div>
+        <div class="log-box" id="logBox">
+          <div class="empty">Agent ready — prompt likho aur run karo...</div>
+        </div>
+      </div>
+
+      <!-- Code -->
+      <div class="card">
+        <div class="card-header">Generated Code</div>
+        <div class="code-box" id="codeBox"><span class="cm"># Code yahan ayega...</span></div>
+      </div>
+
+    </div>
+
+    <div class="right">
+
+      <!-- Blender Status -->
+      <div class="card">
+        <div class="card-header">Blender Status</div>
+        <div class="bl-status">
+          <svg width="30" height="30" viewBox="0 0 100 100" style="filter:drop-shadow(0 0 5px rgba(232,114,28,0.5))">
+            <circle cx="50" cy="50" r="48" fill="#1a1a2e" stroke="#e8721c" stroke-width="3"/>
+            <circle cx="50" cy="42" r="18" fill="none" stroke="#e8721c" stroke-width="5"/>
+            <circle cx="50" cy="42" r="8" fill="#e8721c"/>
+            <rect x="20" y="38" width="60" height="8" rx="4" fill="#ff8c00"/>
+          </svg>
+          <div class="bl-info">
+            <div class="title">Blender Connected</div>
+            <div class="sub">localhost:9876 · MCP Active</div>
+          </div>
+          <div class="live"><div class="dot"></div> LIVE</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="card">
+        <div class="card-header">Statistics</div>
+        <div class="stats">
+          <div class="stat"><div class="stat-val" id="stTotal">0</div><div class="stat-lbl">Total</div></div>
+          <div class="stat"><div class="stat-val" id="stSuccess" style="color:var(--green)">0</div><div class="stat-lbl">Success</div></div>
+          <div class="stat"><div class="stat-val" id="stError" style="color:var(--red)">0</div><div class="stat-lbl">Errors</div></div>
+          <div class="stat"><div class="stat-val" id="stTime" style="color:var(--blue)">0s</div><div class="stat-lbl">Last Run</div></div>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="card">
+        <div class="card-header">Prompt History</div>
+        <div class="hist-box" id="histBox">
+          <div class="empty">History abhi khali hai...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  let stats = {total:0, success:0, error:0};
+  let running = false;
+
+  function getTime() {
+    return new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+
+  function log(tag, msg, type='info') {
+    const box = document.getElementById('logBox');
+    const emp = box.querySelector('.empty');
+    if(emp) emp.remove();
+    const e = document.createElement('div');
+    e.className = 'log-entry';
+    e.innerHTML = `<span class="lt">${getTime()}</span><span class="ltag ${type}">[${tag}]</span><span class="lmsg">${msg}</span>`;
+    box.appendChild(e);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setStep(n, state) {
+    for(let i=1;i<=6;i++) document.getElementById(`s${i}`).className='step';
+    for(let i=1;i<n;i++) document.getElementById(`s${i}`).classList.add('done');
+    document.getElementById(`s${n}`).classList.add(state==='error'?'error':'active');
+  }
+
+  function resetSteps() {
+    for(let i=1;i<=6;i++) document.getElementById(`s${i}`).className='step';
+  }
+
+  function updateStats() {
+    document.getElementById('stTotal').textContent = stats.total;
+    document.getElementById('stSuccess').textContent = stats.success;
+    document.getElementById('stError').textContent = stats.error;
+  }
+
+  function addHistory(prompt, status, elapsed) {
+    const box = document.getElementById('histBox');
+    const emp = box.querySelector('.empty');
+    if(emp) emp.remove();
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    item.onclick = () => document.getElementById('promptInput').value = prompt;
+    item.innerHTML = `
+      <div class="hist-text">${prompt}</div>
+      <div class="hist-meta">
+        <span class="hist-time">${getTime()} · ${elapsed}s</span>
+        <span class="hist-status ${status}">${status==='success'?'✓ Done':'✗ Error'}</span>
+      </div>`;
+    box.insertBefore(item, box.firstChild);
+  }
+
+  function highlightCode(code) {
+    return code
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\b(import|from|def|class|if|else|for|while|try|except|return|in|not|and|or|True|False|None|with|as)\b/g,'<span class="kw">$1</span>')
+      .replace(/\b(bpy|math|os|json)\b/g,'<span class="nm">$1</span>')
+      .replace(/(#[^\n]*)/g,'<span class="cm">$1</span>')
+      .replace(/("[^"]*"|\'[^\']*\')/g,'<span class="st">$1</span>');
+  }
+
+  async function runAgent() {
+    const prompt = document.getElementById('promptInput').value.trim();
+    if(!prompt || running) return;
+
+    running = true;
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Processing...';
+    stats.total++;
+    updateStats();
+    resetSteps();
+    document.getElementById('optBox').style.display = 'none';
+    document.getElementById('codeBox').innerHTML = '<span class="cm"># Generating...</span>';
+
+    const start = Date.now();
+
+    try {
+      setStep(1,'active');
+      log('INPUT', `Prompt: "${prompt.substring(0,50)}..."`, 'info');
+
+      setStep(2,'active');
+      log('DEBUG', 'Prompt check ho raha hai...', 'agent');
+
+      setStep(3,'active');
+      log('AGENT', 'Optimizing prompt...', 'agent');
+
+      const res = await fetch('/run', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({prompt})
+      });
+
+      const data = await res.json();
+
+      if(data.error) throw new Error(data.error);
+
+      document.getElementById('optText').textContent = data.optimized;
+      document.getElementById('optBox').style.display = 'block';
+      log('AGENT', 'Prompt optimized!', 'success');
+
+      setStep(4,'active');
+      document.getElementById('codeBox').innerHTML = highlightCode(data.code);
+      log('GPT', `Code generated! ${data.code.split('\n').length} lines`, 'success');
+
+      setStep(5,'active');
+      log('MCP', 'Blender ko bhej raha hoon...', 'info');
+
+      if(data.success) {
+        setStep(6,'active');
+        document.getElementById(`s6`).classList.add('done');
+        log('BLENDER', 'Execute ho gaya!', 'success');
+        stats.success++;
+      } else {
+        throw new Error(data.message || 'Blender error');
+      }
+
+      const elapsed = data.elapsed;
+      document.getElementById('stTime').textContent = elapsed + 's';
+      addHistory(prompt, 'success', elapsed);
+      log('DONE', `Completed in ${elapsed}s ✅`, 'success');
+
+    } catch(err) {
+      setStep(3,'error');
+      stats.error++;
+      log('ERROR', err.message, 'error');
+      addHistory(prompt, 'error', ((Date.now()-start)/1000).toFixed(1));
+    }
+
+    updateStats();
+    running = false;
+    btn.disabled = false;
+    btn.textContent = '🚀 RUN AGENT';
+  }
+
+  function clearAll() {
+    document.getElementById('promptInput').value = '';
+    document.getElementById('logBox').innerHTML = '<div class="empty">Agent ready — prompt likho aur run karo...</div>';
+    document.getElementById('codeBox').innerHTML = '<span class="cm"># Code yahan ayega...</span>';
+    document.getElementById('optBox').style.display = 'none';
+    resetSteps();
+  }
+
+  document.getElementById('promptInput').addEventListener('keydown', e => {
+    if(e.ctrlKey && e.key==='Enter') runAgent();
+  });
+
+  log('SYSTEM', 'Blender MCP Agent ready!', 'success');
+  log('MCP', 'Port 9876 pe connected', 'info');
+</script>
+</body>
+</html>
